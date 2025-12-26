@@ -1,0 +1,5 @@
+# Ignore the coffee data folder for language stats
+coffee_pages/* linguist-vendored
+
+# (Optional) If you have other html files you want to ignore
+*.html linguist-vendored
