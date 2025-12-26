@@ -11,6 +11,54 @@ It lets you chat with your own documents by retrieving the most relevant content
 - Generates grounded answers using LangChain + Gemini  
 - Supports multi-query search, question breakdown, and basic chat memory
 
+```mermaid
+graph TD
+    %% --- Section 1: Data Ingestion ---
+    subgraph Ingestion [📚 Data Ingestion Pipeline]
+        RawData[📂 HTML Documents<br>coffee_pages/] --> Loader[DirectoryLoader]
+        Loader --> Splitter[Recursive Splitter<br>Chunk: 800, Overlap: 100]
+        Splitter --> Embed[Gemini Embeddings<br>models/embedding-001]
+        Embed --> VectorDB[(🧮 FAISS Vector Store)]
+    end
+
+    %% --- Section 2: Retrieval Strategies ---
+    subgraph Retrieval [🔍 Retrieval Strategies]
+        User([👤 User Input]) --> Strategy{Select Strategy}
+        
+        %% Path A: Basic RAG
+        Strategy -- Basic/MMR --> RetStandard[Retrieve Top-K Docs]
+        
+        %% Path B: Multi-Query
+        Strategy -- Multi-Query --> GenVars[LLM: Generate 3 Variations]
+        GenVars --> RetVars[Retrieve Union of Docs]
+        
+        %% Path C: Decomposition
+        Strategy -- Decomposition --> BreakDown[LLM: Break into Sub-Questions]
+        BreakDown --> SubQA[Answer Each Sub-Question]
+        
+        %% Consolidation
+        RetStandard --> Context
+        RetVars --> Context
+        SubQA --> Context[📝 Combined Context]
+    end
+
+    %% --- Section 3: Generation & Memory ---
+    subgraph Generation [🤖 Generation & Memory]
+        Context --> Prompt[Prompt Template]
+        History[🧠 Conversation Memory] -.-> Prompt
+        Prompt --> LLM[🤖 ChatGoogleGenerativeAI<br>Gemini 2.5 Flash]
+        LLM --> Output([✅ Final Answer])
+    end
+
+    %% Link Ingestion to Retrieval
+    VectorDB -.-> RetStandard
+    VectorDB -.-> RetVars
+
+    %% Styling
+    style VectorDB fill:#FFD966,stroke:#D6B656,stroke-width:2px
+    style LLM fill:#E1D5E7,stroke:#9673A6,stroke-width:2px
+    style User fill:#DAE8FC,stroke:#6C8EBF,stroke-width:2px
+```
 ## Quick Start
 1. Clone the repo and install dependencies:
 ```bash
